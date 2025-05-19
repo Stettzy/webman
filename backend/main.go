@@ -114,10 +114,6 @@ func startServer() {
 
 			w.Write(r)
 
-			if err != nil {
-				return
-			}
-
 			return
 		}
 		// Return result response
