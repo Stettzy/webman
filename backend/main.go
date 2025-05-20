@@ -23,6 +23,18 @@ type Response struct {
 	Body       []byte `json:"body"`
 }
 
+func setupCORS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
+
+	// Handle preflight OPTIONS requests
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+}
+
 func prepAndExecRequest(w http.ResponseWriter, r *http.Request) *http.Response {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -103,6 +115,13 @@ func startServer() {
 
 	// Main request entry point
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		setupCORS(w, r)
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
 		// Handle outbound requests
 		resp := prepAndExecRequest(w, r)
 		if resp == nil {
