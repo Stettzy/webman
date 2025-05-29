@@ -1,15 +1,32 @@
-FROM node:lts-alpine
+FROM node:20-alpine AS base
 
-RUN npm install -g http-server
+WORKDIR /app
 
-WORKDIR /app/frontend
+# Development stage
+FROM base AS development
+EXPOSE 3000
+CMD ["npm", "run", "dev"]
 
-COPY package.json .
+# Production stage
+FROM base AS production
 
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
 RUN npm install
 
+# Copy source code
 COPY . .
 
+# Build the application
 RUN npm run build
 
-CMD npx http-server --port ${PORT:-8081} dist
+# Install serve to run the built app
+RUN npm install -g serve
+
+# Expose port
+EXPOSE 3000
+
+# Serve the built application
+CMD ["serve", "-s", "dist", "-l", "3000"]

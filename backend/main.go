@@ -2,149 +2,230 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
-	"fmt"
+	"encoding/base64"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+
+	"webman/pkg/database"
+	"webman/pkg/models"
+	"webman/pkg/services"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
-type Request struct {
+type ProxyRequest struct {
 	Method  string            `json:"method"`
 	URL     string            `json:"url"`
 	Headers map[string]string `json:"headers"`
 	Body    []byte            `json:"body"`
 }
 
-type Response struct {
-	StatusCode int    `json:"statusCode"`
-	Status     string `json:"status"`
-	Body       []byte `json:"body"`
-}
-
-func setupCORS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
-
-	// Handle preflight OPTIONS requests
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-}
-
-func prepAndExecRequest(w http.ResponseWriter, r *http.Request) *http.Response {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Error parsing request body", http.StatusBadRequest)
-		return nil
-	}
-
-	var req Request
-
-	err = json.Unmarshal(body, &req)
-	if err != nil {
-		http.Error(w, "Error parsing request body", http.StatusBadRequest)
-		return nil
-	}
-
-	// Define client as http.NewRequest must use client to execute the request
-	client := &http.Client{}
-
-	// Transform the body to io.Reader type as http.NewRequest requires this type
-	bodyReader := bytes.NewReader(req.Body)
-
-	newReq, err := http.NewRequest(req.Method, req.URL, bodyReader)
-	if err != nil {
-		http.Error(w, "Error parsing request body", http.StatusBadRequest)
-		return nil
-	}
-
-	// Append the headers
-	for k, v := range req.Headers {
-		newReq.Header.Add(k, v)
-	}
-
-	// Fire the request
-	resp, err := client.Do(newReq)
-	if err != nil {
-		http.Error(w, "Error executing request", http.StatusBadRequest)
-		return nil
-	}
-
-	return resp
-}
-
-func returnResponse(w http.ResponseWriter, r *http.Response) {
-	var res Response
-
-	// We map the values to our response structure
-	res.StatusCode = r.StatusCode
-	res.Status = r.Status
-
-	// Body must be parsed here
-	parsedBody, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Error parsing request body", http.StatusBadRequest)
-	}
-	res.Body = parsedBody
-
-	// We have to convert to json in order to return it as response
-	resJson, err := json.Marshal(res)
-	if err != nil {
-		http.Error(w, "Error parsing request body", http.StatusBadRequest)
-	}
-
-	// Set the response header
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write back with the response writer
-	_, err = w.Write(resJson)
-	if err != nil {
-		http.Error(w, "Error writing response", http.StatusInternalServerError)
-	}
-}
-
-func startServer() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	// Main request entry point
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		setupCORS(w, r)
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		// Handle outbound requests
-		resp := prepAndExecRequest(w, r)
-		if resp == nil {
-
-			r, err := json.Marshal(map[string]string{"message": "fail"})
-			if err != nil {
-				return
-			}
-
-			w.Write(r)
-
-			return
-		}
-		// Return result response
-		returnResponse(w, resp)
-	})
-
-	fmt.Printf("Server listening on port %s...\n", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		log.Fatal(err)
-	}
+type ProxyResponse struct {
+	StatusCode int               `json:"statusCode"`
+	Headers    map[string]string `json:"headers"`
+	Body       string            `json:"body"`
 }
 
 func main() {
-	startServer()
+	// Initialize database
+	dbPath := "./data/webman.db"
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
+		log.Fatalf("Failed to create data directory: %v", err)
+	}
+	if err := database.InitDB(dbPath); err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+
+	r := gin.Default()
+
+	// Configure CORS
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:5173"}
+	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	r.Use(cors.New(config))
+
+	// Initialize services
+	collectionService := services.NewCollectionService()
+	headerService := services.NewHeaderService()
+
+	// Collections endpoints
+	r.GET("/collections", func(c *gin.Context) {
+		collections, err := collectionService.ListCollections()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, collections)
+	})
+
+	r.POST("/collections", func(c *gin.Context) {
+		var req struct {
+			Name        string `json:"name"`
+			Description string `json:"description"`
+		}
+		if err := c.BindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		collection, err := collectionService.CreateCollection(req.Name, req.Description)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusCreated, collection)
+	})
+
+	r.GET("/collections/:id", func(c *gin.Context) {
+		collection, err := collectionService.GetCollection(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, collection)
+	})
+
+	r.PUT("/collections/:id", func(c *gin.Context) {
+		var req struct {
+			Name        string `json:"name"`
+			Description string `json:"description"`
+		}
+		if err := c.BindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		collection, err := collectionService.UpdateCollection(c.Param("id"), req.Name, req.Description)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, collection)
+	})
+
+	r.DELETE("/collections/:id", func(c *gin.Context) {
+		if err := collectionService.DeleteCollection(c.Param("id")); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.Status(http.StatusNoContent)
+	})
+
+	r.POST("/collections/:id/requests", func(c *gin.Context) {
+		var request models.Request
+		if err := c.BindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		err := collectionService.AddRequest(c.Param("id"), request)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.Status(http.StatusCreated)
+	})
+
+	r.PUT("/collections/:id/requests/:requestId", func(c *gin.Context) {
+		var request models.Request
+		if err := c.BindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		request.ID = c.Param("requestId")
+		err := collectionService.UpdateRequest(c.Param("id"), request)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.Status(http.StatusOK)
+	})
+
+	r.DELETE("/collections/:id/requests/:requestId", func(c *gin.Context) {
+		err := collectionService.DeleteRequest(c.Param("id"), c.Param("requestId"))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.Status(http.StatusNoContent)
+	})
+
+	// Default headers endpoint
+	r.GET("/headers/default", func(c *gin.Context) {
+		headers := headerService.GetDefaultHeaders()
+		c.JSON(http.StatusOK, headers)
+	})
+
+	// Proxy endpoint
+	r.POST("/", func(c *gin.Context) {
+		var req ProxyRequest
+		if err := c.BindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "fail", "error": err.Error()})
+			return
+		}
+
+		proxyReq, err := http.NewRequest(req.Method, req.URL, nil)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "fail", "error": err.Error()})
+			return
+		}
+
+		// Set headers
+		for key, value := range req.Headers {
+			proxyReq.Header.Set(key, value)
+		}
+
+		// Set body if present
+		if len(req.Body) > 0 {
+			proxyReq.Body = io.NopCloser(bytes.NewReader(req.Body))
+			proxyReq.ContentLength = int64(len(req.Body))
+		}
+
+		client := &http.Client{}
+		resp, err := client.Do(proxyReq)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "fail", "error": err.Error()})
+			return
+		}
+		defer resp.Body.Close()
+
+		// Read response body
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "fail", "error": err.Error()})
+			return
+		}
+
+		// Convert headers
+		headers := make(map[string]string)
+		for key, values := range resp.Header {
+			if len(values) > 0 {
+				headers[key] = values[0]
+			}
+		}
+
+		// Encode body as base64
+		encodedBody := base64.StdEncoding.EncodeToString(body)
+
+		response := ProxyResponse{
+			StatusCode: resp.StatusCode,
+			Headers:    headers,
+			Body:       encodedBody,
+		}
+
+		c.JSON(http.StatusOK, response)
+	})
+
+	if err := r.Run(":8080"); err != nil {
+		log.Fatal(err)
+	}
 }

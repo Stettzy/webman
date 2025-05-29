@@ -1,7 +1,47 @@
-.idea
-*/node_modules
-*/.env
-*/package-lock.json
+# Dependencies
+node_modules/
+/frontend/node_modules/
+
+# Build outputs
+/frontend/dist/
+/backend/main
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Editor directories and files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Go specific
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+# Data directory
+/data/*
+!/data/.gitkeep
 
 # Logs
 logs
@@ -21,14 +61,5 @@ coverage
 
 /cypress/videos/
 /cypress/screenshots/
-
-# Editor directories and files
-.vscode/settings.json
-!.vscode/extensions.json
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
 
 *.tsbuildinfo

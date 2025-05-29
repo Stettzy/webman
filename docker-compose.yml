@@ -1,20 +1,33 @@
+version: '3.8'
+
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: development
     ports:
       - "8080:8080"
-    env_file:
-      - "backend/.env"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./backend:/app # For hot reloading
+      - ./data:/app/data
+    command: go run main.go
+    environment:
+      - GIN_MODE=debug
+      - GO111MODULE=on
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: development
     ports:
-      - "8081:8081"
-    env_file:
-      - "frontend/.env"
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app # For hot reloading
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    command: npm run dev
+    depends_on:
+      - backend
