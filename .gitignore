@@ -6,11 +6,6 @@ node_modules/
 /frontend/dist/
 /backend/main
 
-# Environment files
-.env
-.env.local
-.env.*.local
-
 # Editor directories and files
 .idea/
 .vscode/

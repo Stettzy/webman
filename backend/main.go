@@ -44,8 +44,10 @@ func main() {
 
 	// Configure CORS
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:5173"}
+	config.AllowOrigins = []string{"http://localhost:9091"}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
+	config.AllowCredentials = true
 	r.Use(cors.New(config))
 
 	// Initialize services
@@ -225,7 +227,7 @@ func main() {
 		c.JSON(http.StatusOK, response)
 	})
 
-	if err := r.Run(":8080"); err != nil {
+	if err := r.Run(":9090"); err != nil {
 		log.Fatal(err)
 	}
 }

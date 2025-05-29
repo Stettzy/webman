@@ -222,7 +222,7 @@ const sendRequest = async () => {
       body: Array.from(bodyBytes)
     };
 
-    const proxyUrl = "http://localhost:8080";
+    const proxyUrl = "http://localhost:9090";
 
     try {
       const response = await fetch(proxyUrl, {
