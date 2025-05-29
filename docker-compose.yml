@@ -10,11 +10,12 @@ services:
       - ./backend:/app # For hot reloading
       - ./data:/app/data
     working_dir: /app
-    command: sh -c "go mod tidy && CGO_ENABLED=0 go run main.go"
+    command: sh -c "go mod tidy && CGO_ENABLED=1 go run main.go"
     environment:
       - GIN_MODE=debug
       - GO111MODULE=on
       - GOOS=linux
+      - CGO_ENABLED=1
 
   frontend:
     build:

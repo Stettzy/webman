@@ -2,6 +2,9 @@ FROM golang:1.23-alpine AS base
 
 WORKDIR /app
 
+# Install build dependencies
+RUN apk add --no-cache gcc musl-dev
+
 # Development stage
 FROM base AS development
 EXPOSE 9090
