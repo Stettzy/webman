@@ -7,9 +7,9 @@ import (
 
 	"github.com/google/uuid"
 
+	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	_ "modernc.org/sqlite"
 )
 
 var DB *gorm.DB
