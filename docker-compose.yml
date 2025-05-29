@@ -10,10 +10,11 @@ services:
       - ./backend:/app # For hot reloading
       - ./data:/app/data
     working_dir: /app
-    command: sh -c "go mod download && go run main.go"
+    command: sh -c "go mod tidy && CGO_ENABLED=0 go run main.go"
     environment:
       - GIN_MODE=debug
       - GO111MODULE=on
+      - GOOS=linux
 
   frontend:
     build:
@@ -21,12 +22,12 @@ services:
       dockerfile: Dockerfile
       target: development
     ports:
-      - "9091:3000"
+      - "9091:5173"
     volumes:
       - ./frontend:/app # For hot reloading
       - /app/node_modules
     working_dir: /app
-    command: sh -c "npm install && npm run dev -- --host"
+    command: sh -c "npm install && npm run dev -- --host --port 5173"
     environment:
       - VITE_API_URL=http://localhost:9090
     depends_on:
