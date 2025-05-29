@@ -35,7 +35,7 @@ const params = ref<KeyValuePair[]>([]);
 const headers = ref<KeyValuePair[]>([]);
 const selectedOption = ref<string>(OPTIONS[0]);
 const selectedMethod = ref<Method>(METHODS[0] as Method);
-const selectedBodyType = ref<BodyType>(BODY_TYPES[0] as BodyType);
+const selectedBodyType = ref<BodyType>("JSON");
 const paramPairs = ref<KeyValuePair>({ key: "", value: "" });
 const responseData = ref<Response | null>(null);
 const isLoading = ref(false);
@@ -43,6 +43,20 @@ const showSaveModal = ref(false)
 const selectedCollectionId = ref('')
 
 const collectionsStore = useCollectionsStore()
+
+// Watch for current request changes
+watch(() => collectionsStore.currentRequest, (request) => {
+  if (request) {
+    requestUrl.value = request.url
+    selectedMethod.value = request.method as Method
+    selectedBodyType.value = request.bodyType as BodyType || "JSON"
+    bodyContent.value = request.body || getEditorPlaceholder()
+    headers.value = Object.entries(request.headers).map(([key, value]) => ({ key, value }))
+  } else {
+    selectedBodyType.value = "JSON"
+    bodyContent.value = getEditorPlaceholder()
+  }
+}, { immediate: true })
 
 // Set initial placeholder on mount
 onMounted(() => {
@@ -122,17 +136,6 @@ watch(selectedBodyType, (newType) => {
     bodyContent.value = getEditorPlaceholder();
   }
 });
-
-// Watch for current request changes
-watch(() => collectionsStore.currentRequest, (request) => {
-  if (request) {
-    requestUrl.value = request.url
-    selectedMethod.value = request.method as Method
-    bodyContent.value = request.body
-    selectedBodyType.value = request.bodyType as BodyType
-    headers.value = Object.entries(request.headers).map(([key, value]) => ({ key, value }))
-  }
-}, { immediate: true })
 
 const saveCurrentRequest = async () => {
   if (!selectedCollectionId.value) {
@@ -488,7 +491,7 @@ const sendRequest = async () => {
               <div>
                 <label for="collection-select" class="block text-sm font-medium text-gray-700 mb-1">Collection</label>
                 <select id="collection-select" v-model="selectedCollectionId"
-                  class="block w-full rounded-md border-0 py-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm">
+                  class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm">
                   <option value="">Choose a collection...</option>
                   <option v-for="collection in collectionsStore.collections" :key="collection.id"
                     :value="collection.id">
@@ -503,7 +506,7 @@ const sendRequest = async () => {
                     class="flex select-none items-center px-3 text-gray-500 sm:text-sm bg-gray-50 rounded-l-md border-r border-gray-300">{{
                       selectedMethod }}</span>
                   <input type="text" id="request-name" :value="`${requestUrl}`" readonly
-                    class="block flex-1 border-0 bg-transparent py-2.5 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm" />
+                    class="block flex-1 border-0 bg-transparent py-2.5 px-3 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm" />
                 </div>
                 <p class="mt-1 text-sm text-gray-500">The request will be saved with this name based on the URL</p>
               </div>
