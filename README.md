@@ -2,8 +2,6 @@
 
 A lightweight, developer-first API testing tool inspired by Postman. Built for developers who want a simple, fast, and local solution for testing their APIs.
 
-![Webman Screenshot](docs/screenshot.png)
-
 ## Why Webman?
 
 Ever wanted Postman but:
