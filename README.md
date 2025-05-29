@@ -38,7 +38,7 @@ That's Webman - a minimalist API testing tool that just works.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/webman
+git clone https://github.com/Stettzy/webman
 cd webman
 
 # Start Webman
