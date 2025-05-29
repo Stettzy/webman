@@ -44,9 +44,19 @@ func main() {
 
 	// Configure CORS
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:9091"}
-	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
-	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
+	config.AllowOrigins = []string{"http://localhost:9091", "http://127.0.0.1:9091", "http://webman.stettzy.com", "https://webman.stettzy.com"}
+	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"}
+	config.AllowHeaders = []string{
+		"Origin",
+		"Content-Type",
+		"Content-Length",
+		"Accept",
+		"Accept-Encoding",
+		"Authorization",
+		"Access-Control-Request-Headers",
+		"Access-Control-Request-Method",
+	}
+	config.ExposeHeaders = []string{"Content-Length"}
 	config.AllowCredentials = true
 	r.Use(cors.New(config))
 
