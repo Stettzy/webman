@@ -29,7 +29,7 @@ export const useCollectionsStore = defineStore('collections', () => {
 
     async function fetchCollections() {
         try {
-            const response = await fetch('http://localhost:8080/collections')
+            const response = await fetch('http://localhost:9090/collections')
             const data = await response.json()
             collections.value = data
         } catch (error) {
@@ -39,7 +39,7 @@ export const useCollectionsStore = defineStore('collections', () => {
 
     async function createCollection(name: string, description: string) {
         try {
-            const response = await fetch('http://localhost:8080/collections', {
+            const response = await fetch('http://localhost:9090/collections', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -57,7 +57,7 @@ export const useCollectionsStore = defineStore('collections', () => {
 
     async function updateCollection(id: string, name: string, description: string) {
         try {
-            const response = await fetch(`http://localhost:8080/collections/${id}`, {
+            const response = await fetch(`http://localhost:9090/collections/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ export const useCollectionsStore = defineStore('collections', () => {
 
     async function deleteCollection(id: string) {
         try {
-            await fetch(`http://localhost:8080/collections/${id}`, {
+            await fetch(`http://localhost:9090/collections/${id}`, {
                 method: 'DELETE',
             })
             collections.value = collections.value.filter(c => c.id !== id)
@@ -94,7 +94,7 @@ export const useCollectionsStore = defineStore('collections', () => {
 
     async function addRequest(collectionId: string, request: Omit<Request, 'id' | 'createdAt' | 'updatedAt'>) {
         try {
-            const response = await fetch(`http://localhost:8080/collections/${collectionId}/requests`, {
+            const response = await fetch(`http://localhost:9090/collections/${collectionId}/requests`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ export const useCollectionsStore = defineStore('collections', () => {
 
     async function updateRequest(collectionId: string, request: Request) {
         try {
-            const response = await fetch(`http://localhost:8080/collections/${collectionId}/requests/${request.id}`, {
+            const response = await fetch(`http://localhost:9090/collections/${collectionId}/requests/${request.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ export const useCollectionsStore = defineStore('collections', () => {
 
     async function deleteRequest(collectionId: string, requestId: string) {
         try {
-            const response = await fetch(`http://localhost:8080/collections/${collectionId}/requests/${requestId}`, {
+            const response = await fetch(`http://localhost:9090/collections/${collectionId}/requests/${requestId}`, {
                 method: 'DELETE',
             })
             if (!response.ok) {

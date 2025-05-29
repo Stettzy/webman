@@ -77,7 +77,7 @@ describe('Dashboard', () => {
 
     it('can send a request and receive a response', () => {
         // Intercept API calls
-        cy.intercept('POST', 'http://localhost:8080', {
+        cy.intercept('POST', 'http://localhost:9090', {
             statusCode: 200,
             body: {
                 body: btoa('{"success":true}'),
@@ -112,7 +112,7 @@ describe('Dashboard', () => {
 
     it('handles request errors gracefully', () => {
         // Intercept API calls with error
-        cy.intercept('POST', 'http://localhost:8080', {
+        cy.intercept('POST', 'http://localhost:9090', {
             statusCode: 500,
             body: {
                 message: 'fail'

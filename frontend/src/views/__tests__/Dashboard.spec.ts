@@ -137,7 +137,7 @@ describe('Dashboard.vue', () => {
 
         // Verify request was sent
         expect(global.fetch).toHaveBeenCalledWith(
-            'http://localhost:8080',
+            'http://localhost:9090',
             expect.objectContaining({
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
@@ -208,7 +208,7 @@ describe('Dashboard.vue', () => {
 
         // Verify URL includes parameters
         expect(global.fetch).toHaveBeenCalledWith(
-            'http://localhost:8080',
+            'http://localhost:9090',
             expect.objectContaining({
                 body: expect.stringContaining('http://api.example.com/users?page=1&limit=10')
             })
@@ -239,7 +239,7 @@ describe('Dashboard.vue', () => {
 
         // Verify request was sent with correct content type and body
         expect(global.fetch).toHaveBeenCalledWith(
-            'http://localhost:8080',
+            'http://localhost:9090',
             expect.objectContaining({
                 method: 'POST',
                 headers: {
