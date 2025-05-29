@@ -2,9 +2,6 @@ FROM golang:1.22-alpine AS base
 
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache build-base
-
 # Development stage
 FROM base AS development
 
@@ -18,15 +15,12 @@ FROM base AS production
 COPY . .
 
 # Build the application
-RUN go build -o main .
+RUN CGO_ENABLED=0 go build -o main .
 
 # Final stage
 FROM alpine:latest AS final
 
 WORKDIR /app
-
-# Install runtime dependencies
-RUN apk add --no-cache ca-certificates tzdata libc6-compat libgcc libstdc++
 
 # Copy the binary from the build stage
 COPY --from=production /app/main .
