@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -225,16 +226,25 @@ func main() {
 			}
 		}
 
-		// Encode body as base64
-		encodedBody := base64.StdEncoding.EncodeToString(body)
+		// Try to parse as JSON first
+		var jsonBody interface{}
+		if err := json.Unmarshal(body, &jsonBody); err == nil {
+			// If it's valid JSON, return it directly
+			c.JSON(http.StatusOK, ProxyResponse{
+				StatusCode: resp.StatusCode,
+				Headers:    headers,
+				Body:       string(body),
+			})
+			return
+		}
 
-		response := ProxyResponse{
+		// If not JSON, encode as base64
+		encodedBody := base64.StdEncoding.EncodeToString(body)
+		c.JSON(http.StatusOK, ProxyResponse{
 			StatusCode: resp.StatusCode,
 			Headers:    headers,
 			Body:       encodedBody,
-		}
-
-		c.JSON(http.StatusOK, response)
+		})
 	})
 
 	if err := r.Run(":9090"); err != nil {
