@@ -11,7 +11,6 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
-    command: nginx -g 'daemon off;'
 
   backend:
     build:
