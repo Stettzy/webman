@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import SidebarMain from '@/components/SidebarMain.vue'
+import SidebarMain from '@/components/SidebarMain.vue'
 </script>
 
 <template>
@@ -11,7 +11,7 @@
           <SidebarMain />
         </div>
       </aside>
-      
+
       <!-- Main content -->
       <main class="flex-1 overflow-y-auto bg-gray-50">
         <div class="container mx-auto px-6 py-8">

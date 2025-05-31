@@ -225,7 +225,7 @@ const sendRequest = async () => {
       body: Array.from(bodyBytes)
     };
 
-    const proxyUrl = "http://localhost:9090";
+    const proxyUrl = "/api";
 
     try {
       const response = await fetch(proxyUrl, {
