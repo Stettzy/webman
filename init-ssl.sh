@@ -13,9 +13,22 @@ sleep 5
 # Stop nginx
 docker compose -f docker-compose.prod.yml stop frontend
 
-# Get the certificate
-docker compose -f docker-compose.prod.yml run --rm certbot certonly --webroot --webroot-path=/var/www/certbot \
-  --email stettzy@gmail.com --agree-tos --no-eff-email --force-renewal -d webman.stettzy.com
+# Get the initial certificate
+docker compose -f docker-compose.prod.yml run --rm certbot certonly --webroot \
+  --webroot-path=/var/www/certbot \
+  --email stettzy@gmail.com \
+  --agree-tos \
+  --no-eff-email \
+  --staging \
+  -d webman.stettzy.com
+
+# If staging was successful, get the real certificate
+docker compose -f docker-compose.prod.yml run --rm certbot certonly --webroot \
+  --webroot-path=/var/www/certbot \
+  --email stettzy@gmail.com \
+  --agree-tos \
+  --no-eff-email \
+  -d webman.stettzy.com
 
 # Start all services
 docker compose -f docker-compose.prod.yml up -d
