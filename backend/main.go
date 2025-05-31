@@ -65,121 +65,125 @@ func main() {
 	collectionService := services.NewCollectionService()
 	headerService := services.NewHeaderService()
 
-	// Collections endpoints
-	r.GET("/collections", func(c *gin.Context) {
-		collections, err := collectionService.ListCollections()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, collections)
-	})
+	// API routes group
+	api := r.Group("/api")
+	{
+		// Collections endpoints
+		api.GET("/collections", func(c *gin.Context) {
+			collections, err := collectionService.ListCollections()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, collections)
+		})
 
-	r.POST("/collections", func(c *gin.Context) {
-		var req struct {
-			Name        string `json:"name"`
-			Description string `json:"description"`
-		}
-		if err := c.BindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+		api.POST("/collections", func(c *gin.Context) {
+			var req struct {
+				Name        string `json:"name"`
+				Description string `json:"description"`
+			}
+			if err := c.BindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
 
-		collection, err := collectionService.CreateCollection(req.Name, req.Description)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+			collection, err := collectionService.CreateCollection(req.Name, req.Description)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
 
-		c.JSON(http.StatusCreated, collection)
-	})
+			c.JSON(http.StatusCreated, collection)
+		})
 
-	r.GET("/collections/:id", func(c *gin.Context) {
-		collection, err := collectionService.GetCollection(c.Param("id"))
-		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, collection)
-	})
+		api.GET("/collections/:id", func(c *gin.Context) {
+			collection, err := collectionService.GetCollection(c.Param("id"))
+			if err != nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, collection)
+		})
 
-	r.PUT("/collections/:id", func(c *gin.Context) {
-		var req struct {
-			Name        string `json:"name"`
-			Description string `json:"description"`
-		}
-		if err := c.BindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+		api.PUT("/collections/:id", func(c *gin.Context) {
+			var req struct {
+				Name        string `json:"name"`
+				Description string `json:"description"`
+			}
+			if err := c.BindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
 
-		collection, err := collectionService.UpdateCollection(c.Param("id"), req.Name, req.Description)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+			collection, err := collectionService.UpdateCollection(c.Param("id"), req.Name, req.Description)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
 
-		c.JSON(http.StatusOK, collection)
-	})
+			c.JSON(http.StatusOK, collection)
+		})
 
-	r.DELETE("/collections/:id", func(c *gin.Context) {
-		if err := collectionService.DeleteCollection(c.Param("id")); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.Status(http.StatusNoContent)
-	})
+		api.DELETE("/collections/:id", func(c *gin.Context) {
+			if err := collectionService.DeleteCollection(c.Param("id")); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.Status(http.StatusNoContent)
+		})
 
-	r.POST("/collections/:id/requests", func(c *gin.Context) {
-		var request models.Request
-		if err := c.BindJSON(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+		api.POST("/collections/:id/requests", func(c *gin.Context) {
+			var request models.Request
+			if err := c.BindJSON(&request); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
 
-		err := collectionService.AddRequest(c.Param("id"), request)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+			err := collectionService.AddRequest(c.Param("id"), request)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
 
-		c.Status(http.StatusCreated)
-	})
+			c.Status(http.StatusCreated)
+		})
 
-	r.PUT("/collections/:id/requests/:requestId", func(c *gin.Context) {
-		var request models.Request
-		if err := c.BindJSON(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+		api.PUT("/collections/:id/requests/:requestId", func(c *gin.Context) {
+			var request models.Request
+			if err := c.BindJSON(&request); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
 
-		request.ID = c.Param("requestId")
-		err := collectionService.UpdateRequest(c.Param("id"), request)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+			request.ID = c.Param("requestId")
+			err := collectionService.UpdateRequest(c.Param("id"), request)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
 
-		c.Status(http.StatusOK)
-	})
+			c.Status(http.StatusOK)
+		})
 
-	r.DELETE("/collections/:id/requests/:requestId", func(c *gin.Context) {
-		err := collectionService.DeleteRequest(c.Param("id"), c.Param("requestId"))
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.Status(http.StatusNoContent)
-	})
+		api.DELETE("/collections/:id/requests/:requestId", func(c *gin.Context) {
+			err := collectionService.DeleteRequest(c.Param("id"), c.Param("requestId"))
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.Status(http.StatusNoContent)
+		})
 
-	// Default headers endpoint
-	r.GET("/headers/default", func(c *gin.Context) {
-		headers := headerService.GetDefaultHeaders()
-		c.JSON(http.StatusOK, headers)
-	})
+		// Default headers endpoint
+		api.GET("/headers/default", func(c *gin.Context) {
+			headers := headerService.GetDefaultHeaders()
+			c.JSON(http.StatusOK, headers)
+		})
+	}
 
 	// Proxy endpoint
-	r.POST("/", func(c *gin.Context) {
+	r.POST("/api", func(c *gin.Context) {
 		var req ProxyRequest
 		if err := c.BindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "fail", "error": err.Error()})
